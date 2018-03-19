@@ -3,11 +3,21 @@ require(sf)
 require(tidyverse)
 
 # load data
-setwd("Strassenbaumkataster_HH_2017-04-05_GML")
 tree_df = sf::st_read("strassenbaeume_online_2017.gml")
-g = as(tree_df, "Spatial")
 
-# filter
-tree_df = select(tree_df, GATTUNG_DEUTSCH, geometry)
-tree_test = unlunclass(st_cast(tree_df$geometry, "POINT"))
-tree_test1 = as.data.frame(unlist(tree_test))
+# transform from utm to lat long
+tree_df <-st_transform(x = tree_df, crs = 4326)
+tree_df$long <-st_coordinates(tree_df$geometry)[,1]
+tree_df$lat <-st_coordinates(tree_df$geometry)[,2]
+
+# select cols and format
+tree_df = select(tree_df, GATTUNG_DEUTSCH, PFLANZJAHR, STADTTEIL, BEZIRK, long, lat)
+tree_df$geometry = NULL
+tree_df = as.data.frame(tree_df)
+
+# plot
+ggplot() + 
+  geom_point(data = tree_df, aes(x = long, y = lat), size = 0.01)
+
+# next up: animation
+https://www.r-graph-gallery.com/a-smooth-transition-between-chloropleth-and-cartogram/
